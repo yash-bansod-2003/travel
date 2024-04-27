@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Train {
+  id            String   @id @default(cuid())
+  trainNumber   String   @unique
+  sourceId      String
+  source        City     @relation("TrainSource", fields: [sourceId], references: [id])
+  destinationId String
+  destination   City     @relation("TrainDestination", fields: [destinationId], references: [id])
+  name          String
+  departureTime String
+  arrivalTime   String
+  price         Float
+  createdAt     DateTime @default(now()) @map(name: "created_at")
+  updatedAt     DateTime @default(now()) @map(name: "updated_at")
+  steps         Step[]
+
+  @@map("trains")
+}
+
+model Bus {
+  id            String   @id @default(cuid())
+  busNumber     String   @unique
+  name          String
+  sourceId      String
+  source        City     @relation("BusSource", fields: [sourceId], references: [id])
+  destinationId String
+  destination   City     @relation("BusDestination", fields: [destinationId], references: [id])
+  departureTime String
+  arrivalTime   String
+  price         Float
+  createdAt     DateTime @default(now()) @map(name: "created_at")
+  updatedAt     DateTime @default(now()) @map(name: "updated_at")
+  steps         Step[]
+
+  @@map("buses")
+}
+
+model Hotel {
+  id          String   @id @default(cuid())
+  name        String
+  cityId      String
+  city        City     @relation(fields: [cityId], references: [id])
+  address     String
+  stars       Int
+  checkIn     String   @map(name: "check_in")
+  checkOut    String   @map(name: "check_out")
+  description String
+  rooms       Room[]
+  createdAt   DateTime @default(now()) @map(name: "created_at")
+  updatedAt   DateTime @default(now()) @map(name: "updated_at")
+  steps       Step[]
+  Booking     Booking? @relation(fields: [bookingId], references: [id])
+  bookingId   String?
+
+  @@map("hotels")
+}
+
+model Room {
+  id         String   @id @default(cuid())
+  hotel      Hotel    @relation(fields: [hotelId], references: [id])
+  hotelId    String
+  roomNumber String
+  name       String
+  capacity   Int
+  price      Float
+  createdAt  DateTime @default(now()) @map(name: "created_at")
+  updatedAt  DateTime @default(now()) @map(name: "updated_at")
+
+  @@map("rooms")
+}
+
+model Booking {
+  id        String   @id @default(cuid())
+  userId    String
+  total     Int
+  startDate String   @map(name: "start_date")
+  endDate   String?  @map(name: "end_date")
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @default(now()) @map(name: "updated_at")
+  package   Package  @relation(fields: [packageId], references: [id])
+  hotels    Hotel[]
+  packageId String
+  users     String[]
+
+  @@map("bookings")
+}
+
+model Step {
+  id        String   @id @default(cuid())
+  order     Int
+  days      String
+  train     Train?   @relation(fields: [trainId], references: [id])
+  trainId   String?
+  bus       Bus?     @relation(fields: [busId], references: [id])
+  busId     String?
+  hotel     Hotel?   @relation(fields: [hotelId], references: [id])
+  hotelId   String?
+  package   Package  @relation(fields: [packageId], references: [id])
+  packageId String
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @default(now()) @map(name: "updated_at")
+
+  @@map("steps")
+}
+
+model State {
+  id        String   @id @default(cuid())
+  name      String
+  value     String
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @default(now()) @map(name: "updated_at")
+  cities    City[]
+
+  @@map("states")
+}
+
+model Package {
+  id          String    @id @default(cuid())
+  name        String
+  description String
+  duration    Int
+  price       Float
+  image       String
+  bookings    Booking[]
+  createdAt   DateTime  @default(now()) @map(name: "created_at")
+  updatedAt   DateTime  @default(now()) @map(name: "updated_at")
+  steps       Step[]
+  cities      City[]
+
+  @@map("packages")
+}
+
+model City {
+  id                String    @id @default(cuid())
+  name              String
+  value             String
+  stateId           String
+  state             State     @relation(fields: [stateId], references: [id])
+  createdAt         DateTime  @default(now()) @map(name: "created_at")
+  updatedAt         DateTime  @default(now()) @map(name: "updated_at")
+  trainSources      Train[]   @relation("TrainSource")
+  trainDestinations Train[]   @relation("TrainDestination")
+  busSources        Bus[]     @relation("BusSource")
+  busDestinations   Bus[]     @relation("BusDestination")
+  hotels            Hotel[]
+  packages          Package[]
+
+  @@map("cities")
+}
